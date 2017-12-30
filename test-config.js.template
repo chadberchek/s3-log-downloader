@@ -1,0 +1,50 @@
+'use strict';
+
+const AWS = require('aws-sdk');
+
+module.exports = {
+    // Name of bucket where tests will create and delete objects.
+    // It should not be used for any other purpose.
+    bucket: '',
+
+    // Optional - AWS region in which the bucket resides. If
+    // omitted, use shared config file or environment variables:
+    // https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-region.html
+    region: '',
+
+    // Optional - AWS credentials. See:
+    // https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html
+    //
+    // The test user should have least privileges; the tests require
+    // s3:PutObject, s3:GetObject, s3:ListBucket, s3:DeleteObject. For example
+    // you could create a test user and attach this policy to the user:
+    // {
+    //     "Version": "2012-10-17",
+    //     "Statement": [
+    //         {
+    //             "Sid": "S3LogIntegrationTestUserPolicy",
+    //             "Effect": "Allow",
+    //             "Action": [
+    //                 "s3:PutObject",
+    //                 "s3:GetObject",
+    //                 "s3:ListBucket",
+    //                 "s3:DeleteObject"
+    //             ],
+    //             "Resource": [
+    //                 "arn:aws:s3:::testbucket",
+    //                 "arn:aws:s3:::testbucket/*"
+    //             ]
+    //         }
+    //     ]
+    // }
+    //
+    // If you want to use the shared credentials file:
+    // credentials: new AWS.SharedIniFileCredentials({profile: 'test-profile'})
+    //
+    // If you want to put credentials here directly:
+    // credentials: {         
+    //     accessKeyId: 'MyKeyId',
+    //     secretAccessKey: 'MySecret'
+    // }
+    credentials: null
+};

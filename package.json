@@ -1,0 +1,18 @@
+{
+  "name": "s3-log-downloader",
+  "version": "0.0.1",
+  "description": "Download S3 access logs from an S3 bucket using promise-pull-stream for high performance.",
+  "main": "index.js",
+  "scripts": {
+    "test": "jasmine"
+  },
+  "author": "Chad Berchek",
+  "license": "MIT",
+  "devDependencies": {
+    "jasmine": "^2.8.0"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.154.0",
+    "moment": "^2.19.2"
+  }
+}
