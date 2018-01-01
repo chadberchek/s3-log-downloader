@@ -9,7 +9,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const util = require('util');
-const getObject = require('../lib/get-object');
+const getLog = require('../lib/get-log');
 const logConverter = require('../lib/convert-log');
 const readFile = util.promisify(fs.readFile);
 const unlink = util.promisify(fs.unlink);
@@ -40,8 +40,7 @@ describe('log fetcher', () => {
                         parallelLogDownloads: 5,
                         output,
                         listObjects: listBucket(fixture.client, { Bucket: fixture.bucket, Prefix: fixture.prefix }),
-                        getObject: getObject(fixture.client, fixture.bucket),
-                        convert: logConverter(Parser.parseS3Log)
+                        getLog: getLog(fixture.client, fixture.bucket, logConverter(Parser.parseS3Log)),
                     });
                 } finally {
                     await output.close();
