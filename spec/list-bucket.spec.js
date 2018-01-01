@@ -21,12 +21,12 @@ describe('listS3Bucket', () => {
         const listingPromiseFactory = listS3Bucket(fixture.client, copyOfParams);
 
         expect(await listingPromiseFactory()).toEqual([
-            jasmine.objectContaining({ Key: fixture.testObjectKeys[0], Size: 1 }),
-            jasmine.objectContaining({ Key: fixture.testObjectKeys[1], Size: 3 })
+            fixture.testObjectKeys[0],
+            fixture.testObjectKeys[1]
         ]);
 
         expect(await listingPromiseFactory()).toEqual([
-            jasmine.objectContaining({ Key: fixture.testObjectKeys[2], Size: 2})
+            fixture.testObjectKeys[2]
         ]);
 
         try {
