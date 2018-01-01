@@ -13,33 +13,32 @@ const writeFile = util.promisify(fs.writeFile);
 
 describe('CsvFileOutput', () => {
     it('writes file', async () => {
-        const log = {
-            logKey: "root/log-file-name",
-            logEntries: [{
-                bucketOwner: 'PPL4',
-                bucket: 'www.site.com',
-                time: new Date(Date.UTC(2017, 10, 6, 22, 38, 11)),
-                remoteIp: '192.168.1.58',
-                requester: 'ANONYMOUS',
-                requestId: 'RQID123',
-                operation: 'WEBSITE.GET.OBJECT',
-                key: 'index.html',
-                requestUri: "GET /mybucket?versioning HTTP/1.1",
-                httpStatus: 200,
-                errorCode: 'none',
-                bytesSent: 57,
-                objectSize: 100,
-                totalTime: 33,
-                turnAroundTime: 20,
-                referrer: 'https://www.google.com/?abc',
-                userAgent: 'Test/Agent',
-                versionId: 'v1',
-                httpMethod: 'GET',
-                pathname: '/index.html',
-                queryString: 'versioning',
-                httpVersion: 'HTTP/1.1',
-            }]
-        };
+        const log = [{
+            logFileName: 'root/log-file-name',
+            lineNumber: 0,
+            bucketOwner: 'PPL4',
+            bucket: 'www.site.com',
+            time: new Date(Date.UTC(2017, 10, 6, 22, 38, 11)),
+            remoteIp: '192.168.1.58',
+            requester: 'ANONYMOUS',
+            requestId: 'RQID123',
+            operation: 'WEBSITE.GET.OBJECT',
+            key: 'index.html',
+            requestUri: "GET /mybucket?versioning HTTP/1.1",
+            httpStatus: 200,
+            errorCode: 'none',
+            bytesSent: 57,
+            objectSize: 100,
+            totalTime: 33,
+            turnAroundTime: 20,
+            referrer: 'https://www.google.com/?abc',
+            userAgent: 'Test/Agent',
+            versionId: 'v1',
+            httpMethod: 'GET',
+            pathname: '/index.html',
+            queryString: 'versioning',
+            httpVersion: 'HTTP/1.1',
+        }];
 
         const testFileName = path.join(os.tmpdir(), 'csvFileOutputTest-' + Date.now());
         
