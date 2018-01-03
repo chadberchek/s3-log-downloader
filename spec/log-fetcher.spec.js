@@ -13,6 +13,7 @@ const getLog = require('../lib/get-log');
 const logConverter = require('../lib/convert-log');
 const readFile = util.promisify(fs.readFile);
 const unlink = util.promisify(fs.unlink);
+const {DONE} = require('promise-pull-streams');
 
 describe('log fetcher', () => {
     describe('integrated with S3', () => {
@@ -34,13 +35,11 @@ describe('log fetcher', () => {
             try {
                 try {
                     await logFetcher({
-                        s3: fixture.client,
-                        bucket: fixture.bucket,
-                        prefix: fixture.prefix,
-                        parallelLogDownloads: 5,
                         output,
-                        listObjects: listBucket(fixture.client, { Bucket: fixture.bucket, Prefix: fixture.prefix }),
-                        getLog: getLog(fixture.client, fixture.bucket, logConverter(Parser.parseS3Log)),
+                        logStore: {
+                            list: listBucket(fixture.client, { Bucket: fixture.bucket, Prefix: fixture.prefix }),
+                            get: getLog(fixture.client, fixture.bucket, logConverter(Parser.parseS3Log))
+                        }
                     });
                 } finally {
                     await output.close();
@@ -57,9 +56,90 @@ describe('log fetcher', () => {
         });
     });
 
-    xdescribe('with mocks', () => {
+    describe('with mocks', () => {
         beforeEach(() => {
-            this.s3 = jasmine.createSpyObj('s3', ['list'])
-        })
+            this.params = {
+                logStore: jasmine.createSpyObj('logStore', ['list', 'get', 'delete']),
+                output: jasmine.createSpyObj('output', ['write', 'commit'])
+            };
+            this.setMockLogList = function(...listingPages) {
+                const itr = listingPages[Symbol.iterator]();
+                this.params.logStore.list.and.callFake(() => {
+                    const next = itr.next();
+                    return next.done ? Promise.reject(DONE) : Promise.resolve(next.value);
+                });
+            };
+            this.params.logStore.get.and.callFake(logName => Promise.resolve(logName + ' data model'));
+            this.params.output.write.and.returnValue(Promise.resolve());
+            this.params.output.commit.and.returnValue(Promise.resolve());
+        });
+
+        it('lists logs, gets each one, and writes it to the output', async () => {
+            this.setMockLogList(['log0', 'log1'], ['log2']);
+            
+            await logFetcher(this.params);
+
+            expect(this.params.output.write).toHaveBeenCalledWith('log0 data model');
+            expect(this.params.output.write).toHaveBeenCalledWith('log1 data model');
+            expect(this.params.output.write).toHaveBeenCalledWith('log2 data model');
+            expect(this.params.output.write).toHaveBeenCalledTimes(3);
+        });
+
+        it('commits the output and deletes the logs if delete flag is true', async () => {
+            this.params.deleteOriginalLogs = true;
+            this.params.deleteBatchSize = 10;
+            this.setMockLogList(['log0', 'log1'], ['log2']);
+
+            await logFetcher(this.params);
+
+            expect(this.params.output.commit).toHaveBeenCalledTimes(1);
+            expect(this.params.logStore.delete).toHaveBeenCalledTimes(1);
+            expect(this.params.logStore.delete).toHaveBeenCalledWith(['log0 data model', 'log1 data model', 'log2 data model']);
+        });
+
+        it('does not delete logs if delete flag not set', async () => {
+            this.params.deleteBatchSize = 10;
+            this.setMockLogList(['a']);
+
+            await logFetcher(this.params);
+
+            expect(this.params.output.commit).not.toHaveBeenCalled();
+            expect(this.params.logStore.delete).not.toHaveBeenCalled();
+        });
+
+        it('deletes logs in batches of specified size', async () => {
+            this.setMockLogList(['a', 'b', 'c']);
+            this.params.deleteBatchSize = 2;
+            this.params.deleteOriginalLogs = true;
+
+            await logFetcher(this.params);
+
+            expect(this.params.output.commit).toHaveBeenCalledTimes(2);
+            expect(this.params.logStore.delete).toHaveBeenCalledTimes(2);
+            expect(this.params.logStore.delete).toHaveBeenCalledWith(['a data model', 'b data model']);
+            expect(this.params.logStore.delete).toHaveBeenCalledWith(['c data model']);
+        });
+
+        it('calls methods with their context', async () => {
+            this.setMockLogList(['a']);
+            this.params.deleteBatchSize = 2;
+            this.params.deleteOriginalLogs = true;
+
+            await logFetcher(this.params);
+
+            expectMethodCalledWithOwnContext(this.params.logStore, 'list');
+            expectMethodCalledWithOwnContext(this.params.logStore, 'get');
+            expectMethodCalledWithOwnContext(this.params.logStore, 'delete');
+            expectMethodCalledWithOwnContext(this.params.output, 'write');
+            expectMethodCalledWithOwnContext(this.params.output, 'commit');
+        });
     });
 });
+
+function expectMethodCalledWithOwnContext(object, spyMethodName) {
+    object[spyMethodName].calls.all().forEach(call => {
+        if (call.object !== object) {
+            fail(`Expected ${spyMethodName} to be called with its own context`);
+        }
+    });
+}
