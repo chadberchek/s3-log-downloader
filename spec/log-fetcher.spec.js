@@ -2,8 +2,9 @@
 
 const logFetcher = require('../lib/log-fetcher');
 const s3Fixture = require('./s3-fixture');
-const CsvFileOutput = require('../lib/file-output');
+const FileOutput = require('../lib/file-output');
 const listBucket = require('../lib/list-bucket');
+const csvFormat = require('../lib/csv-format');
 const Parser = require('../lib/parse-s3-log');
 const path = require('path');
 const fs = require('fs');
@@ -30,7 +31,7 @@ describe('log fetcher', () => {
 
         it('downloads, parses and saves logs as CSV', async () => {
             const testFileName = path.join(os.tmpdir(), 'logFetcherTest-' + Date.now());
-            const output = new CsvFileOutput();
+            const output = new FileOutput(csvFormat);
             await output.open(testFileName);
             try {
                 try {

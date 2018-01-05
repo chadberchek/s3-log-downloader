@@ -1,6 +1,6 @@
 'use strict';
 
-const CsvFileOutput = require('../lib/file-output');
+const FileOutput = require('../lib/file-output');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -11,54 +11,30 @@ const unlink = util.promisify(fs.unlink);
 const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
 
-describe('CsvFileOutput', () => {
+describe('FileOutput', () => {
     it('writes file', async () => {
-        const log = [{
-            logFileName: 'root/log-file-name',
-            lineNumber: 0,
-            bucketOwner: 'PPL4',
-            bucket: 'www.site.com',
-            time: new Date(Date.UTC(2017, 10, 6, 22, 38, 11)),
-            remoteIp: '192.168.1.58',
-            requester: 'ANONYMOUS',
-            requestId: 'RQID123',
-            operation: 'WEBSITE.GET.OBJECT',
-            key: 'index.html',
-            requestUri: "GET /mybucket?versioning HTTP/1.1",
-            httpStatus: 200,
-            errorCode: 'none',
-            bytesSent: 57,
-            objectSize: 100,
-            totalTime: 33,
-            turnAroundTime: 20,
-            referrer: 'https://www.google.com/?abc',
-            userAgent: 'Test/Agent',
-            versionId: 'v1',
-            httpMethod: 'GET',
-            pathname: '/index.html',
-            queryString: 'versioning',
-            httpVersion: 'HTTP/1.1',
-        }];
-
-        const testFileName = path.join(os.tmpdir(), 'csvFileOutputTest-' + Date.now());
+        const log = {
+            key: 'some log',
+            body: 'the log content'
+        };
+        const testFileName = path.join(os.tmpdir(), 'fileOutputTest-' + Date.now());
+        const format = x => x + ' formatted';
         
-        const file = new CsvFileOutput();
+        const file = new FileOutput(format);
         await file.open(testFileName);
         await access(testFileName);
         await file.write(log);
         await file.commit();
-        expect(await readFile(testFileName, 'utf8')).toBe(
-            `"root/log-file-name",0,"PPL4","www.site.com",2017-11-06T22:38:11.000Z,"192.168.1.58","ANONYMOUS","RQID123","WEBSITE.GET.OBJECT","index.html","GET /mybucket?versioning HTTP/1.1",200,"none",57,100,33,20,"https://www.google.com/?abc","Test/Agent","v1","GET","/index.html","versioning","HTTP/1.1"\r\n`
-        );        
+        expect(await readFile(testFileName, 'utf8')).toBe('the log content formatted');
         await file.close();
         await unlink(testFileName);
     });
 
     it('does not overwrite files', async () => {
-        const testFileName = path.join(os.tmpdir(), 'csvFileOutputTest2-' + Date.now());
+        const testFileName = path.join(os.tmpdir(), 'fileOutputTest2-' + Date.now());
         await writeFile(testFileName, '');
 
-        const file = new CsvFileOutput();
+        const file = new FileOutput(x => x);
         try {
             await file.open(testFileName);
             fail('Expected error attempting to open existing file for writing');
