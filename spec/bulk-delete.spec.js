@@ -11,7 +11,10 @@ describe('s3BulkDelete', () => {
     ]);
 
     it('deletes specified objects', async () => {        
-        await s3BulkDelete(fixture.client, fixture.bucket, [fixture.testObjectKeys[0], fixture.testObjectKeys[2]]);
+        await s3BulkDelete(fixture.client, fixture.bucket)([
+            { key: fixture.testObjectKeys[0] },
+            { key: fixture.testObjectKeys[2] } 
+        ]);
 
         const objectListing = await fixture.listObjects();
 
