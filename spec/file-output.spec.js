@@ -1,6 +1,6 @@
 'use strict';
 
-const FileOutput = require('../lib/file-output');
+const fileOutput = require('../lib/file-output');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -20,7 +20,7 @@ describe('FileOutput', () => {
         const testFileName = path.join(os.tmpdir(), 'fileOutputTest-' + Date.now());
         const format = x => x + ' formatted';
         
-        const file = new FileOutput(format);
+        const file = fileOutput(format);
         await file.open(testFileName);
         await access(testFileName);
         await file.write(log);
@@ -34,7 +34,7 @@ describe('FileOutput', () => {
         const testFileName = path.join(os.tmpdir(), 'fileOutputTest2-' + Date.now());
         await writeFile(testFileName, '');
 
-        const file = new FileOutput(x => x);
+        const file = fileOutput(x => x);
         try {
             await file.open(testFileName);
             fail('Expected error attempting to open existing file for writing');
