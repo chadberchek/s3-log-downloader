@@ -15,6 +15,7 @@ const logConverter = require('../lib/convert-log');
 const readFile = util.promisify(fs.readFile);
 const unlink = util.promisify(fs.unlink);
 const {DONE} = require('promise-pull-streams');
+const {Deferred, immediate} = require('./test-util');
 
 describe('log fetcher', () => {
     describe('integrated with S3', () => {
@@ -57,7 +58,7 @@ describe('log fetcher', () => {
         });
     });
 
-    describe('with mocks', () => {
+    fdescribe('with mocks', () => {
         beforeEach(() => {
             this.params = {
                 logStore: jasmine.createSpyObj('logStore', ['list', 'get', 'delete']),
@@ -133,6 +134,56 @@ describe('log fetcher', () => {
             expectMethodCalledWithOwnContext(this.params.logStore, 'delete');
             expectMethodCalledWithOwnContext(this.params.output, 'write');
             expectMethodCalledWithOwnContext(this.params.output, 'commit');
+        });
+
+        it('commits output before deleting originals', async () => {
+            this.setMockLogList(['a']);
+            this.params.deleteBatchSize = 1;
+            this.params.deleteOriginalLogs = true;
+            const commit = new Deferred();
+            this.params.output.commit.and.returnValue(commit.promise);
+
+            logFetcher(this.params);
+            await immediate();            
+            expect(this.params.output.commit).toHaveBeenCalledTimes(1);
+            expect(this.params.logStore.delete).not.toHaveBeenCalled();
+
+            commit.resolve();
+            await immediate();
+            expect(this.params.logStore.delete).toHaveBeenCalledTimes(1);
+        });
+
+        it('writes log before committing output', async () => {
+            this.setMockLogList(['a']);
+            this.params.deleteBatchSize = 1;
+            this.params.deleteOriginalLogs = true;
+            const write = new Deferred();
+            this.params.output.write.and.returnValue(write.promise);
+
+            logFetcher(this.params);
+            await immediate();
+            expect(this.params.output.write).toHaveBeenCalledTimes(1);
+            expect(this.params.output.commit).not.toHaveBeenCalled();
+
+            write.resolve();
+            await immediate();
+            expect(this.params.output.commit).toHaveBeenCalledTimes(1);
+        });
+
+        it('waits for deletion to complete before starting another deletion', async () => {
+            this.setMockLogList(['a', 'b']);
+            this.params.deleteBatchSize = 1;
+            this.params.deleteOriginalLogs = true;
+            const firstDelete = new Deferred();
+            this.params.logStore.delete.and.returnValue(firstDelete.promise);
+
+            logFetcher(this.params);
+            await immediate();
+            expect(this.params.logStore.delete).toHaveBeenCalledTimes(1);
+
+            firstDelete.resolve();
+            await immediate();
+            expect(this.params.logStore.delete).toHaveBeenCalledTimes(2);
         });
     });
 });
