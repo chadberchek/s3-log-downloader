@@ -142,19 +142,6 @@ describe('log fetcher', () => {
             expect(this.params.logStore.delete).toHaveBeenCalledWith(['c data model']);
         });
 
-        it('calls methods with their context', async () => {
-            this.setMockLogList(['a']);
-            this.deleteWithBatchSize(2);
-
-            await logFetcher(this.params);
-
-            expectMethodCalledWithOwnContext(this.params.logStore, 'list');
-            expectMethodCalledWithOwnContext(this.params.logStore, 'get');
-            expectMethodCalledWithOwnContext(this.params.logStore, 'delete');
-            expectMethodCalledWithOwnContext(this.params.output, 'write');
-            expectMethodCalledWithOwnContext(this.params.output, 'commit');
-        });
-
         it('commits output before deleting originals', async () => {
             this.setMockLogList(['a']);
             this.deleteWithBatchSize(1);
@@ -174,11 +161,3 @@ describe('log fetcher', () => {
         });
     });
 });
-
-function expectMethodCalledWithOwnContext(object, spyMethodName) {
-    object[spyMethodName].calls.all().forEach(call => {
-        if (call.object !== object) {
-            fail(`Expected ${spyMethodName} to be called with its own context`);
-        }
-    });
-}
