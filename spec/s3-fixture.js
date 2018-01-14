@@ -1,19 +1,26 @@
 'use strict';
 
+const testConfigFile = 'test-config.js';
 const https = require('https');
 const AWS = require('aws-sdk');
-const testConfig = require('../test-config.js');
+const testConfig = require('../' + testConfigFile);
 
-function createS3Client() {
-    const params = {
+function testConfigParam(paramName) {
+    if (!testConfig[paramName]) {
+        throw new Error(`AWS test ${paramName} not configured; see ${testConfigFile}`);        
+    }
+    return testConfig[paramName];
+}
+
+function createS3Client(region, credentials) {
+    return new AWS.S3({
         httpOptions: { 
             agent: new https.Agent({keepAlive: true, keepAliveMsecs: 1000})
         },
-        apiVersion: '2006-03-01'
-    };
-    if (testConfig.region) params.region = testConfig.region;
-    if (testConfig.credentials) params.credentials = testConfig.credentials;
-    return new AWS.S3(params);
+        apiVersion: '2006-03-01',
+        region,
+        credentials
+    });
 }
 
 function createS3Fixture(specDescriptionPrefix, objects, beforeFn, afterFn) {
@@ -27,13 +34,11 @@ function createS3Fixture(specDescriptionPrefix, objects, beforeFn, afterFn) {
     };
 
     beforeFn(() => {
-        if (!testConfig.bucket) {
-            throw new Error('Test bucket name not configured');
-        }
-
         fixture.prefix = 'test-' + specDescriptionPrefix + new Date().toISOString().replace(/:/g, '-') + '/';
-        fixture.client = createS3Client();
-        fixture.bucket = testConfig.bucket;
+        fixture.bucket = testConfigParam('bucket');
+        fixture.region = testConfigParam('region');
+        fixture.credentials = testConfigParam('credentials');
+        fixture.client = createS3Client(fixture.region, fixture.credentials);
         fixture.testObjectKeys = objects.map(o => fixture.prefix + o.key);
 
         return Promise.all(objects.map(o => 

@@ -7,12 +7,10 @@ module.exports = {
     // It should not be used for any other purpose.
     bucket: '',
 
-    // Optional - AWS region in which the bucket resides. If
-    // omitted, use shared config file or environment variables:
-    // https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-region.html
+    // AWS region in which the bucket resides.
     region: '',
 
-    // Optional - AWS credentials. See:
+    // AWS credentials. See:
     // https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html
     //
     // The test user should have least privileges; the tests require
