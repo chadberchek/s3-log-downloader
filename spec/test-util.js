@@ -9,9 +9,13 @@ function Deferred() {
     });
 }
 Deferred.stub = function(spy) {
-    const deferred = new Deferred();
-    spy.and.returnValue(deferred.promise);
-    return deferred;
+    const deferrals = [];
+    spy.and.callFake(() => {
+        const d = new Deferred();
+        deferrals.push(d);
+        return d.promise;
+    });
+    return deferrals;
 };
 
 const promiseHandlersCalled = promisify(setImmediate);

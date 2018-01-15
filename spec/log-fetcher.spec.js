@@ -8,7 +8,8 @@ describe('log fetcher', () => {
     beforeEach(() => {
         this.params = {
             logStore: jasmine.createSpyObj('logStore', ['list', 'get', 'delete']),
-            output: jasmine.createSpyObj('output', ['write', 'commit'])
+            output: jasmine.createSpyObj('output', ['write', 'commit']),
+            parallelLogGets: 1,
         };
         this.setMockLogList = function(...listingPages) {
             const itr = listingPages[Symbol.iterator]();
@@ -25,7 +26,7 @@ describe('log fetcher', () => {
         this.params.output.write.and.returnValue(Promise.resolve());
         this.params.output.commit.and.returnValue(Promise.resolve());
         this.testAsyncOperationsAreSequential = async function(op1, op2) {
-            const op1Deferred = Deferred.stub(op1);
+            const op1Deferrals = Deferred.stub(op1);
 
             logFetcher(this.params);
             await promiseHandlersCalled();
@@ -34,7 +35,7 @@ describe('log fetcher', () => {
                 expect(op2).not.toHaveBeenCalled();
             }
 
-            op1Deferred.resolve();
+            op1Deferrals[0].resolve();
             await promiseHandlersCalled();
             if (op2) {
                 expect(op2).toHaveBeenCalledTimes(1);                    
@@ -104,5 +105,25 @@ describe('log fetcher', () => {
         this.setMockLogList(['a', 'b']);
         this.deleteWithBatchSize(1);
         await this.testAsyncOperationsAreSequential(this.params.logStore.delete);
+    });
+
+    it('can get logs in parallel', async () => {
+        this.params.parallelLogGets = 2;
+        this.setMockLogList(['a', 'b', 'c']);
+        const getLogDeferrals = Deferred.stub(this.params.logStore.get);
+        Deferred.stub(this.params.output.write); // write is not immediate; need adequate buffer
+
+        logFetcher(this.params);
+        await promiseHandlersCalled();
+        expect(this.params.logStore.get).toHaveBeenCalledTimes(this.params.parallelLogGets);
+        getLogDeferrals[0].resolve('log a');
+        await promiseHandlersCalled();
+        expect(this.params.logStore.get).toHaveBeenCalledTimes(this.params.parallelLogGets + 1);
+    });
+
+    it('does not write output in parallel', async () => {
+        this.params.parallelLogGets = 2;
+        this.setMockLogList(['a', 'b']) ;
+        await this.testAsyncOperationsAreSequential(this.params.output.write);
     });
 });

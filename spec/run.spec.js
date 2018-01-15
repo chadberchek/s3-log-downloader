@@ -31,6 +31,7 @@ describe('run', () => {
                 credentials: fixture.credentials,
                 keyPrefix: fixture.prefix,
                 outputFileName: testFileName,
+                parallelLogDownloads: 2,
             });
             const result = await readFile(testFileName, 'utf8');       
             expect(result).toBe(
