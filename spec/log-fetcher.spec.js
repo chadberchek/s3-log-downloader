@@ -126,4 +126,34 @@ describe('log fetcher', () => {
         this.setMockLogList(['a', 'b']) ;
         await this.testAsyncOperationsAreSequential(this.params.output.write);
     });
+
+    it('starts getting the next page of the listing while processing logs on current page', async () => {
+        const listDeferrals = Deferred.stub(this.params.logStore.list);
+        Deferred.stub(this.params.logStore.get); // get does not complete immediately
+
+        logFetcher(this.params);
+        expect(this.params.logStore.list).toHaveBeenCalledTimes(1);
+        listDeferrals[0].resolve(['a']);
+        await promiseHandlersCalled();
+        // After getting first page, immediately start getting next even though logs on first page
+        // have not been processed yet
+        expect(this.params.logStore.list).toHaveBeenCalledTimes(2);
+    });
+
+    it('processes logs in the order they become available', async () => {
+        this.params.parallelLogGets = 2;
+        this.setMockLogList(['a', 'b']);
+        const getLogDeferrals = Deferred.stub(this.params.logStore.get);
+
+        logFetcher(this.params);
+        await promiseHandlersCalled();
+        expect(this.params.logStore.get).toHaveBeenCalledTimes(2); // 2 parallel log retrievals
+        getLogDeferrals[1].resolve('log b'); // second one is available first
+        await promiseHandlersCalled();
+        expect(this.params.output.write).toHaveBeenCalledWith('log b');
+        // also process the first log once it becomes available
+        getLogDeferrals[0].resolve('log a');
+        await promiseHandlersCalled();
+        expect(this.params.output.write).toHaveBeenCalledWith('log a');
+    });
 });
