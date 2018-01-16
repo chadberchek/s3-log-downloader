@@ -41,6 +41,9 @@ describe('run', () => {
             expect(result).toContain(
                 `"${fixture.prefix}log1",0,"aaaaaa5420f2dcb65665b0a97563133","zTestBucket.a",2017-01-10T03:58:18.000Z,"150.12.77.175",,"E812F5100226A76C","WEBSITE.GET.OBJECT","vt.png","GET /vt.png HTTP/1.1",304,,0,2392,4,,"http://zTestBucket.a.s3-website-us-east-1.amazonaws.com/vt.png","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2486.0 Safari/537.36 Edge/13.10586",,"GET","/vt.png",,"HTTP/1.1"\r\n`
             );
+
+            // Should not delete objects
+            expect((await fixture.listObjects()).Contents.length).toBe(fixture.testObjectKeys.length);
         } finally {
             try {
                 await unlink(testFileName);
@@ -49,4 +52,27 @@ describe('run', () => {
             }
         }
     });
+
+    it('deletes original logs if delete parameter is true', async () => {
+        const testFileName = path.join(os.tmpdir(), 'logFetcherTest-' + Date.now());
+        try {
+            await run({
+                region: fixture.region,
+                bucket: fixture.bucket,
+                credentials: fixture.credentials,
+                keyPrefix: fixture.prefix,
+                outputFileName: testFileName,
+                parallelLogDownloads: 2,
+                deleteOriginalLogs: true,
+            });
+            
+            expect((await fixture.listObjects()).Contents).toEqual([]);
+        } finally {
+            try {
+                await unlink(testFileName);
+            } catch (e) {
+                fail(e);
+            }
+        }
+    }); 
 });
