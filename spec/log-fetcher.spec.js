@@ -156,4 +156,27 @@ describe('log fetcher', () => {
         await promiseHandlersCalled();
         expect(this.params.output.write).toHaveBeenCalledWith('log a');
     });
+
+    it('deletes batches in parallel', async () => {
+        this.deleteWithBatchSize(1);
+        this.params.parallelDeleteBatches = 2;
+        this.setMockLogList(['a', 'b', 'c']);
+        const deferredDeletes = Deferred.stub(this.params.logStore.delete);
+
+        logFetcher(this.params);
+        await promiseHandlersCalled();
+        expect(this.params.logStore.delete).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not call commit in parallel when deleting in parallel', async () => {
+        this.deleteWithBatchSize(1);
+        this.params.parallelDeleteBatches = 2;
+        this.setMockLogList(['a', 'b']);
+        const commitDeferrals = Deferred.stub(this.params.output.commit);
+
+        logFetcher(this.params);
+        await promiseHandlersCalled();
+        expect(this.params.output.commit).toHaveBeenCalledTimes(1);
+        expect(this.params.output.commit).toHaveBeenCalledWith(['a data model']);
+    });
 });
