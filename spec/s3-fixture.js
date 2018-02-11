@@ -33,7 +33,7 @@ function createS3Fixture(specDescriptionPrefix, objects, beforeFn, afterFn) {
         }
     };
 
-    beforeFn(() => {
+    beforeFn(function() {
         fixture.prefix = 'test-' + specDescriptionPrefix + new Date().toISOString().replace(/:/g, '-') + '/';
         fixture.bucket = testConfigParam('bucket');
         fixture.region = testConfigParam('region');
@@ -46,7 +46,7 @@ function createS3Fixture(specDescriptionPrefix, objects, beforeFn, afterFn) {
         ));
     });
 
-    afterFn(() => {
+    afterFn(function() {
         return fixture.client.deleteObjects({
             Bucket: fixture.bucket,
             Delete: {

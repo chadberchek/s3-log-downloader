@@ -2,10 +2,10 @@
 
 const csv = require('../lib/csv-format');
 
-describe("S3 log to CSV", () => {
+describe("S3 log to CSV", function() {
     let entry0, entry1;
 
-    beforeEach(() => {
+    beforeEach(function() {
         entry0 = {
             logFileName: 'root/log-file-name',
             lineNumber: 0,
@@ -61,7 +61,7 @@ describe("S3 log to CSV", () => {
         };
     });
 
-    it("produces quoted, comma-separated, CRLF-delimited string", () => {
+    it("produces quoted, comma-separated, CRLF-delimited string", function() {
         const result = csv([entry0]);
 
         expect(result).toBe(
@@ -69,7 +69,7 @@ describe("S3 log to CSV", () => {
         );
     });
 
-    it("converts null or undefined properties to unquoted empty strings", () => {
+    it("converts null or undefined properties to unquoted empty strings", function() {
         delete entry1.referrer; // make an undefined property
 
         const result = csv([entry1]);
@@ -79,7 +79,7 @@ describe("S3 log to CSV", () => {
         );
     });
 
-    it("doubles quotes in values", () => {
+    it("doubles quotes in values", function() {
         entry0.logFileName = 'log"with"weird"name';
         entry0.bucketOwner = 'P"PL4';
         entry0.requester = 'A"NONYMOUS';
@@ -95,7 +95,7 @@ describe("S3 log to CSV", () => {
         );
     });
 
-    it("outputs 0 as field value not emptry string", () => {
+    it("outputs 0 as field value not emptry string", function() {
         entry0.bytesSent = 0;
 
         const result = csv([entry0]);
@@ -105,7 +105,7 @@ describe("S3 log to CSV", () => {
         );
     });
 
-    it("returns empty string if there are no log entries", () => {
+    it("returns empty string if there are no log entries", function() {
         const result = csv([]);
 
         expect(result).toBe('');

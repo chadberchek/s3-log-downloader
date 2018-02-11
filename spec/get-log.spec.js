@@ -3,12 +3,12 @@
 const getLog = require('../lib/get-log');
 const s3Fixture = require('./s3-fixture');
 
-describe('get log', () => {
+describe('get log', function() {
     const fixture = s3Fixture.forEachSpec('get-log', [
         { key: 'something', body: 'the content' }
     ]);
 
-    it('downloads the object and converts it to log data model using given converter', async () => {
+    it('downloads the object and converts it to log data model using given converter', async function() {
         const convert = jasmine.createSpy('convert').and.returnValue('log data model');
         const log = await getLog(fixture.client, fixture.bucket, convert)(fixture.testObjectKeys[0]);
         expect(convert).toHaveBeenCalledWith({ key: fixture.testObjectKeys[0], body: 'the content' });

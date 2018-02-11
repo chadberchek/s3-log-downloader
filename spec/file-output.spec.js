@@ -11,8 +11,8 @@ const unlink = util.promisify(fs.unlink);
 const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
 
-describe('FileOutput', () => {
-    it('writes file', async () => {
+describe('FileOutput', function() {
+    it('writes file', async function() {
         const log = {
             key: 'some log',
             body: 'the log content'
@@ -30,7 +30,7 @@ describe('FileOutput', () => {
         await unlink(testFileName);
     });
 
-    it('does not overwrite files', async () => {
+    it('does not overwrite files', async function() {
         const testFileName = path.join(os.tmpdir(), 'fileOutputTest2-' + Date.now());
         await writeFile(testFileName, '');
 

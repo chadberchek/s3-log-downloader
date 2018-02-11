@@ -4,8 +4,8 @@ const logFetcher = require('../lib/log-fetcher');
 const {DONE} = require('promise-pull-streams');
 const {Deferred, promiseHandlersCalled} = require('./test-util');
 
-describe('log fetcher', () => {
-    beforeEach(() => {
+describe('log fetcher', function() {
+    beforeEach(function() {
         this.params = {
             logStore: jasmine.createSpyObj('logStore', ['list', 'get', 'delete']),
             output: jasmine.createSpyObj('output', ['write', 'commit']),
@@ -45,7 +45,7 @@ describe('log fetcher', () => {
         };
     });
 
-    it('lists logs, gets each one, and writes it to the output', async () => {
+    it('lists logs, gets each one, and writes it to the output', async function() {
         this.setMockLogList(['log0', 'log1'], ['log2']);
         
         await logFetcher(this.params);
@@ -56,7 +56,7 @@ describe('log fetcher', () => {
         expect(this.params.output.write).toHaveBeenCalledTimes(3);
     });
 
-    it('commits the output and deletes the logs if delete flag is true', async () => {
+    it('commits the output and deletes the logs if delete flag is true', async function() {
         this.deleteWithBatchSize(10);
         this.setMockLogList(['log0', 'log1'], ['log2']);
 
@@ -67,7 +67,7 @@ describe('log fetcher', () => {
         expect(this.params.logStore.delete).toHaveBeenCalledWith(['log0 data model', 'log1 data model', 'log2 data model']);
     });
 
-    it('does not delete logs if delete flag not set', async () => {
+    it('does not delete logs if delete flag not set', async function() {
         this.params.deleteBatchSize = 10;
         this.setMockLogList(['a']);
 
@@ -77,7 +77,7 @@ describe('log fetcher', () => {
         expect(this.params.logStore.delete).not.toHaveBeenCalled();
     });
 
-    it('deletes logs in batches of specified size', async () => {
+    it('deletes logs in batches of specified size', async function() {
         this.setMockLogList(['a', 'b', 'c']);
         this.deleteWithBatchSize(2);
 
@@ -89,25 +89,25 @@ describe('log fetcher', () => {
         expect(this.params.logStore.delete).toHaveBeenCalledWith(['c data model']);
     });
 
-    it('commits output before deleting originals', async () => {
+    it('commits output before deleting originals', async function() {
         this.setMockLogList(['a']);
         this.deleteWithBatchSize(1);
         await this.testAsyncOperationsAreSequential(this.params.output.commit, this.params.logStore.delete);
     });
 
-    it('writes log before committing output', async () => {
+    it('writes log before committing output', async function() {
         this.setMockLogList(['a']);
         this.deleteWithBatchSize(1);
         await this.testAsyncOperationsAreSequential(this.params.output.write, this.params.output.commit);
     });
 
-    it('waits for deletion to complete before starting another deletion', async () => {
+    it('waits for deletion to complete before starting another deletion', async function() {
         this.setMockLogList(['a', 'b']);
         this.deleteWithBatchSize(1);
         await this.testAsyncOperationsAreSequential(this.params.logStore.delete);
     });
 
-    it('can get logs in parallel', async () => {
+    it('can get logs in parallel', async function() {
         this.params.parallelLogGets = 2;
         this.setMockLogList(['a', 'b', 'c']);
         const getLogDeferrals = Deferred.stub(this.params.logStore.get);
@@ -121,13 +121,13 @@ describe('log fetcher', () => {
         expect(this.params.logStore.get).toHaveBeenCalledTimes(this.params.parallelLogGets + 1);
     });
 
-    it('does not write output in parallel', async () => {
+    it('does not write output in parallel', async function() {
         this.params.parallelLogGets = 2;
         this.setMockLogList(['a', 'b']) ;
         await this.testAsyncOperationsAreSequential(this.params.output.write);
     });
 
-    it('starts getting the next page of the listing while processing logs on current page', async () => {
+    it('starts getting the next page of the listing while processing logs on current page', async function() {
         const listDeferrals = Deferred.stub(this.params.logStore.list);
         Deferred.stub(this.params.logStore.get); // get does not complete immediately
 
@@ -140,7 +140,7 @@ describe('log fetcher', () => {
         expect(this.params.logStore.list).toHaveBeenCalledTimes(2);
     });
 
-    it('processes logs in the order they become available', async () => {
+    it('processes logs in the order they become available', async function() {
         this.params.parallelLogGets = 2;
         this.setMockLogList(['a', 'b']);
         const getLogDeferrals = Deferred.stub(this.params.logStore.get);
@@ -157,7 +157,7 @@ describe('log fetcher', () => {
         expect(this.params.output.write).toHaveBeenCalledWith('log a');
     });
 
-    it('deletes batches in parallel', async () => {
+    it('deletes batches in parallel', async function() {
         this.deleteWithBatchSize(1);
         this.params.parallelDeleteBatches = 2;
         this.setMockLogList(['a', 'b', 'c']);
@@ -168,7 +168,7 @@ describe('log fetcher', () => {
         expect(this.params.logStore.delete).toHaveBeenCalledTimes(2);
     });
 
-    it('does not call commit in parallel when deleting in parallel', async () => {
+    it('does not call commit in parallel when deleting in parallel', async function() {
         this.deleteWithBatchSize(1);
         this.params.parallelDeleteBatches = 2;
         this.setMockLogList(['a', 'b']);

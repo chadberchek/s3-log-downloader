@@ -10,7 +10,7 @@ const s3Fixture = require('./s3-fixture');
 const readFile = util.promisify(fs.readFile);
 const unlink = util.promisify(fs.unlink);
 
-describe('run', () => {
+describe('run', function() {
     const log0Content = 
             'bf766c5420f2dcb65665b0a97563133 zTestBucket.a [27/Apr/2016:03:58:24 +0000] 16.5.31.180 - D04E408645828411 WEBSITE.GET.OBJECT main/index.html "GET /main/index.html HTTP/1.1" 200 - 16700 16700 14 14 "http://zTestBucket.a.s3-website-us-east-1.amazonaws.com/main/index.html" "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.112 Safari/537.36" -\n' +
             'cccccc5420f2dcb65665b0a97563133 zTestBucket.a [25/Jun/2016:13:01:56 +0000] 17.86.2.8 arn:aws:iam::123456789:user/bob CAD1C1CB85A07AA5 REST.PUT.OBJECT ra.png "PUT /zTestBucket.a/ra.png?X-Amz-Stuff=abc123 HTTP/1.1" 200 - - 121 20 8 "-" "S3Console/0.4" -\n';
@@ -22,7 +22,7 @@ describe('run', () => {
         { key: 'log1', body: log1Content }
     ]);
 
-    beforeEach(() => {
+    beforeEach(function() {
         this.runParams = {
             region: fixture.region,
             bucket: fixture.bucket,
@@ -33,9 +33,11 @@ describe('run', () => {
         };
     });
 
-    afterEach(() => unlink(this.runParams.outputFileName));
+    afterEach(function() {
+        unlink(this.runParams.outputFileName);
+    });
     
-    it('downloads, parses and saves logs as CSV', async () => {
+    it('downloads, parses and saves logs as CSV', async function() {
         await run(this.runParams);
         const result = await readFile(this.runParams.outputFileName, 'utf8');       
         expect(result).toContain(
@@ -50,7 +52,7 @@ describe('run', () => {
         expect((await fixture.listObjects()).Contents.length).toBe(fixture.testObjectKeys.length);
     });
 
-    it('deletes original logs if delete parameter is true', async () => {
+    it('deletes original logs if delete parameter is true', async function() {
         this.runParams.deleteOriginalLogs = true;
         await run(this.runParams);
         expect((await fixture.listObjects()).Contents).toEqual([]);

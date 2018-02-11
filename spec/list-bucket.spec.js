@@ -4,14 +4,14 @@ const {DONE} = require('promise-pull-streams');
 const listS3Bucket = require('../lib/list-bucket');
 const s3Fixture = require('./s3-fixture');
 
-describe('listS3Bucket', () => {
+describe('listS3Bucket', function() {
     const fixture = s3Fixture.forAllSpecs('listS3Bucket', [
         {body: '1',   key: 'ATestObject'},
         {body: 'abc', key: 'BTestObject'},
         {body: 'wd',  key: 'CTestObject'}
     ]);
     
-    it('lists each page of objects until there are no more', async () => {
+    it('lists each page of objects until there are no more', async function() {
         const originalParams = {
             Bucket: fixture.bucket,
             Prefix: fixture.prefix,
