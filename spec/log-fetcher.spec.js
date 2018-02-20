@@ -2,7 +2,7 @@
 
 const logFetcher = require('../lib/log-fetcher');
 const {DONE} = require('promise-pull-streams');
-const {Deferred, promiseHandlersCalled} = require('./test-util');
+const {Deferred, promiseHandlersCalled, rejected} = require('./test-util');
 
 describe('log fetcher', function() {
     beforeEach(function() {
@@ -93,6 +93,25 @@ describe('log fetcher', function() {
         this.setMockLogList(['a']);
         this.deleteWithBatchSize(1);
         await this.testAsyncOperationsAreSequential(this.params.output.commit, this.params.logStore.delete);
+    });
+
+    it('does not delete logs if write fails', async function() {
+        this.setMockLogList(['a']);
+        this.deleteWithBatchSize(1);
+        this.params.output.write.and.returnValue(Promise.reject('write failed'));
+        
+        expect(await rejected(logFetcher(this.params))).toBe('write failed');
+        expect(this.params.output.commit).not.toHaveBeenCalled();
+        expect(this.params.logStore.delete).not.toHaveBeenCalled();
+    });
+
+    it('does not delete logs if commit fails', async function() {
+        this.setMockLogList(['a']);
+        this.deleteWithBatchSize(1);
+        this.params.output.commit.and.returnValue(Promise.reject('commit failed'));
+        
+        expect(await rejected(logFetcher(this.params))).toBe('commit failed');
+        expect(this.params.logStore.delete).not.toHaveBeenCalled();
     });
 
     it('writes log before committing output', async function() {

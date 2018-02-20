@@ -20,7 +20,17 @@ Deferred.stub = function(spy) {
 
 const promiseHandlersCalled = promisify(setImmediate);
 
+async function rejected(promise) {
+    try {
+        const v = await promise;
+        fail(`Expected promise to reject but fulfilled ${String(v)}`);
+    } catch (reason) {
+        return reason;
+    }
+}
+
 module.exports = {
     Deferred,
     promiseHandlersCalled,
+    rejected,
 };
